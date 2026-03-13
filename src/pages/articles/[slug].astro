@@ -1,0 +1,141 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getBacklinks } from '../../lib/wikilinks';
+import TikTok from '../../components/TikTok.astro';
+import YouTube from '../../components/YouTube.astro';
+import SoundCloud from '../../components/SoundCloud.astro';
+import Vimeo from '../../components/Vimeo.astro';
+import Gallery from '../../components/Gallery.astro';
+
+export async function getStaticPaths() {
+  const articles = await getCollection('articles');
+  return articles.map((article) => ({
+    params: { slug: article.slug },
+    props: { article },
+  }));
+}
+
+const { article } = Astro.props;
+const { Content, headings } = await article.render();
+
+const backlinks = await getBacklinks(article.slug);
+
+const allArticles = await getCollection('articles');
+const relatedArticles = allArticles
+  .filter((a) => a.slug !== article.slug)
+  .filter((a) => a.data.tags.some((tag) => article.data.tags.includes(tag)))
+  .slice(0, 3);
+---
+
+<BaseLayout
+  title={`${article.data.title} - xstasis`}
+  description={article.data.summary}
+>
+  <div class="container mx-auto px-4 py-12">
+    <div class="max-w-4xl mx-auto">
+      <div class="mb-8">
+        <div class="mb-4">
+          <a href="/articles" class="text-sm text-gray-500 hover:text-neon-cyan transition-colors uppercase tracking-wider">
+            ← Back to Articles
+          </a>
+        </div>
+
+        <article>
+          <time class="text-sm text-gray-500 font-mono mb-4 block">
+            {article.data.date.toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })}
+          </time>
+
+          <h1 class="text-5xl font-bold mb-6 neon-text leading-tight">
+            {article.data.title}
+          </h1>
+
+          <p class="text-xl text-gray-400 mb-8 leading-relaxed">
+            {article.data.summary}
+          </p>
+
+          {article.data.tags.length > 0 && (
+            <div class="flex flex-wrap gap-2 mb-8">
+              {article.data.tags.map((tag) => (
+                <span class="px-3 py-1 bg-gray-800 text-gray-400 rounded text-sm">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {headings.length > 0 && (
+            <div class="mb-12 p-6 bg-gray-900/30 border border-gray-800 rounded-lg">
+              <div class="text-sm text-gray-500 uppercase tracking-wider mb-3">Contents</div>
+              <ul class="space-y-2">
+                {headings
+                  .filter(h => h.depth <= 3)
+                  .map((heading) => (
+                    <li style={`margin-left: ${(heading.depth - 1) * 1}rem`}>
+                      <a
+                        href={`#${heading.slug}`}
+                        class="text-gray-400 hover:text-neon-cyan transition-colors text-sm"
+                      >
+                        {heading.text}
+                      </a>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          )}
+
+          <div class="prose-dark">
+            <Content components={{ TikTok, YouTube, SoundCloud, Vimeo, Gallery }} />
+          </div>
+        </article>
+      </div>
+
+      {backlinks.length > 0 && (
+        <div class="my-12 p-6 bg-gray-900/30 border border-gray-800 rounded-lg">
+          <h2 class="text-2xl font-bold mb-4 text-neon-cyan">Backlinks</h2>
+          <p class="text-sm text-gray-500 mb-4">Pages that reference this article</p>
+          <ul class="space-y-2">
+            {backlinks.map((link) => {
+              const href = link.type === 'club' ? `/clubs/${link.slug}`
+                : link.type === 'article' ? `/articles/${link.slug}`
+                : `/run#${link.slug}`;
+              return (
+                <li>
+                  <a
+                    href={href}
+                    class="text-gray-300 hover:text-neon-cyan transition-colors flex items-center gap-2"
+                  >
+                    <span class="text-xs uppercase tracking-wider text-gray-600">{link.type}</span>
+                    <span>→</span>
+                    <span>{link.title}</span>
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
+      {relatedArticles.length > 0 && (
+        <div class="p-6 bg-gray-900/30 border border-gray-800 rounded-lg">
+          <h2 class="text-2xl font-bold mb-4 text-neon-pink">Related Articles</h2>
+          <div class="space-y-4">
+            {relatedArticles.map((related) => (
+              <a
+                href={`/articles/${related.slug}`}
+                class="block p-4 bg-gray-900/50 border border-gray-800 rounded hover:border-neon-pink transition-all"
+              >
+                <h3 class="font-semibold text-gray-100 mb-2">{related.data.title}</h3>
+                <p class="text-sm text-gray-400 line-clamp-2">{related.data.summary}</p>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+</BaseLayout>

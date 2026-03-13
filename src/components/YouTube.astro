@@ -1,0 +1,24 @@
+---
+interface Props {
+  id: string;
+}
+
+const { id } = Astro.props;
+---
+
+{id ? (
+  <div class="youtube-embed relative w-full pb-[56.25%] my-8 rounded-lg overflow-hidden bg-black">
+    <iframe
+      class="absolute top-0 left-0 w-full h-full"
+      src={`https://www.youtube.com/embed/${id}`}
+      title="YouTube video player"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen
+    ></iframe>
+  </div>
+) : (
+  <div class="bg-red-900/20 border border-red-500 p-4 rounded my-4">
+    <p class="text-red-400">Missing YouTube video ID</p>
+  </div>
+)}

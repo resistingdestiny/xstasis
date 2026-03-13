@@ -1,0 +1,35 @@
+---
+interface Props {
+  url: string;
+}
+
+const { url } = Astro.props;
+
+let videoId = '';
+if (url) {
+  const match = url.match(/\/video\/(\d+)/);
+  if (match) {
+    videoId = match[1];
+  }
+}
+---
+
+{videoId ? (
+  <div class="tiktok-embed my-8">
+    <blockquote
+      class="tiktok-embed"
+      cite={url}
+      data-video-id={videoId}
+      style="max-width: 605px; min-width: 325px;"
+    >
+      <section>
+        <a target="_blank" title="TikTok" href={url}>View on TikTok</a>
+      </section>
+    </blockquote>
+    <script async src="https://www.tiktok.com/embed.js"></script>
+  </div>
+) : (
+  <div class="bg-red-900/20 border border-red-500 p-4 rounded my-4">
+    <p class="text-red-400">Invalid TikTok URL</p>
+  </div>
+)}

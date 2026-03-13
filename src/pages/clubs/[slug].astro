@@ -1,0 +1,142 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getBacklinks, getRelatedClubs } from '../../lib/wikilinks';
+import TikTok from '../../components/TikTok.astro';
+import YouTube from '../../components/YouTube.astro';
+import SoundCloud from '../../components/SoundCloud.astro';
+import Vimeo from '../../components/Vimeo.astro';
+import Gallery from '../../components/Gallery.astro';
+
+export async function getStaticPaths() {
+  const clubs = await getCollection('clubs');
+  return clubs.map((club) => ({
+    params: { slug: club.slug },
+    props: { club },
+  }));
+}
+
+const { club } = Astro.props;
+const { Content, headings } = await club.render();
+
+const backlinks = await getBacklinks(club.slug);
+const relatedClubs = await getRelatedClubs(club.data.tags, club.slug);
+---
+
+<BaseLayout
+  title={`${club.data.title} - xstasis`}
+  description={`Explore ${club.data.title} in ${club.data.city}, ${club.data.country}`}
+>
+  <div class="container mx-auto px-4 py-12">
+    <div class="max-w-4xl mx-auto">
+      <div class="mb-8">
+        <div class="mb-4">
+          <a href="/clubs" class="text-sm text-gray-500 hover:text-neon-cyan transition-colors uppercase tracking-wider">
+            ← Back to Clubs
+          </a>
+        </div>
+
+        <div class="p-8 bg-gray-900/50 border border-gray-800 rounded-lg mb-8">
+          <div class="flex items-start justify-between mb-4">
+            <h1 class="text-5xl font-bold neon-text">{club.data.title}</h1>
+            {club.data.visited && (
+              <span class="px-3 py-1 bg-neon-cyan/20 text-neon-cyan text-sm rounded uppercase tracking-wider">
+                Visited
+              </span>
+            )}
+          </div>
+
+          <div class="text-xl text-gray-400 mb-4">
+            {club.data.city}, {club.data.country}
+          </div>
+
+          {club.data.djmagRank && (
+            <div class="text-neon-pink mb-4">
+              DJ Mag Top 100 Clubs: #{club.data.djmagRank} ({club.data.djmagYear})
+            </div>
+          )}
+
+          {club.data.tags.length > 0 && (
+            <div class="flex flex-wrap gap-2">
+              {club.data.tags.map((tag) => (
+                <span class="px-3 py-1 bg-gray-800 text-gray-400 rounded text-sm">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {headings.length > 0 && (
+          <div class="mb-8 p-6 bg-gray-900/30 border border-gray-800 rounded-lg">
+            <div class="text-sm text-gray-500 uppercase tracking-wider mb-3">Contents</div>
+            <ul class="space-y-2">
+              {headings
+                .filter(h => h.depth <= 3)
+                .map((heading) => (
+                  <li style={`margin-left: ${(heading.depth - 1) * 1}rem`}>
+                    <a
+                      href={`#${heading.slug}`}
+                      class="text-gray-400 hover:text-neon-cyan transition-colors text-sm"
+                    >
+                      {heading.text}
+                    </a>
+                  </li>
+                ))}
+            </ul>
+          </div>
+        )}
+      </div>
+
+      <article class="prose-dark mb-12">
+        <Content components={{ TikTok, YouTube, SoundCloud, Vimeo, Gallery }} />
+      </article>
+
+      {backlinks.length > 0 && (
+        <div class="mb-12 p-6 bg-gray-900/30 border border-gray-800 rounded-lg">
+          <h2 class="text-2xl font-bold mb-4 text-neon-cyan">Backlinks</h2>
+          <p class="text-sm text-gray-500 mb-4">Pages that reference this club</p>
+          <ul class="space-y-2">
+            {backlinks.map((link) => {
+              const href = link.type === 'club' ? `/clubs/${link.slug}`
+                : link.type === 'article' ? `/articles/${link.slug}`
+                : `/run#${link.slug}`;
+              return (
+                <li>
+                  <a
+                    href={href}
+                    class="text-gray-300 hover:text-neon-cyan transition-colors flex items-center gap-2"
+                  >
+                    <span class="text-xs uppercase tracking-wider text-gray-600">{link.type}</span>
+                    <span>→</span>
+                    <span>{link.title}</span>
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
+      {relatedClubs.length > 0 && (
+        <div class="p-6 bg-gray-900/30 border border-gray-800 rounded-lg">
+          <h2 class="text-2xl font-bold mb-4 text-neon-pink">Related Clubs</h2>
+          <p class="text-sm text-gray-500 mb-4">Based on shared tags</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {relatedClubs.map((related) => (
+              <a
+                href={`/clubs/${related.slug}`}
+                class="p-4 bg-gray-900/50 border border-gray-800 rounded hover:border-neon-pink transition-all"
+              >
+                <h3 class="font-semibold text-gray-100 mb-1">{related.data.title}</h3>
+                <div class="text-sm text-gray-500">
+                  {related.data.city}, {related.data.country}
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+</BaseLayout>

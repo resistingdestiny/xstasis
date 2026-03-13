@@ -1,0 +1,119 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --neon-glow: 0 0 10px rgba(0, 255, 255, 0.5), 0 0 20px rgba(0, 255, 255, 0.3);
+  }
+
+  body {
+    @apply bg-gray-950 text-gray-100;
+    font-feature-settings: "kern", "liga", "clig", "calt";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 255, 255, 0.2) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: rgba(0, 255, 255, 0.2);
+    border-radius: 3px;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 255, 255, 0.3);
+  }
+}
+
+@layer components {
+  .grain-overlay {
+    @apply fixed inset-0 pointer-events-none z-50 opacity-20;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='4' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    mix-blend-mode: overlay;
+  }
+
+  .wiki-link {
+    @apply text-neon-cyan underline decoration-1 decoration-dotted hover:decoration-solid transition-all underline-offset-2;
+  }
+
+  .wiki-link-missing {
+    @apply text-neon-pink opacity-70;
+  }
+
+  .neon-text {
+    text-shadow: 0 0 20px rgba(0, 255, 255, 0.3), 0 0 40px rgba(0, 255, 255, 0.15);
+  }
+
+  .glow-box {
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+  }
+
+  .prose-arty {
+    @apply max-w-none;
+  }
+
+  .prose-arty p {
+    @apply text-gray-300 leading-relaxed;
+  }
+
+  .prose-arty a {
+    @apply text-neon-cyan no-underline hover:underline underline-offset-2 decoration-1 transition-colors;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(0, 255, 255, 0.3);
+    border-radius: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 255, 255, 0.5);
+  }
+
+  .prose-dark {
+    @apply prose prose-invert max-w-none;
+    @apply prose-headings:text-gray-100 prose-headings:font-light prose-headings:tracking-tight;
+    @apply prose-h1:text-5xl prose-h1:mb-8;
+    @apply prose-h2:text-4xl prose-h2:mb-6 prose-h2:mt-12;
+    @apply prose-h3:text-2xl prose-h3:mb-4 prose-h3:mt-8;
+    @apply prose-p:text-gray-300 prose-p:leading-relaxed prose-p:text-lg;
+    @apply prose-a:text-neon-cyan prose-a:no-underline hover:prose-a:underline prose-a:underline-offset-2 prose-a:decoration-1;
+    @apply prose-strong:text-gray-100 prose-strong:font-medium;
+    @apply prose-em:text-gray-400 prose-em:italic;
+    @apply prose-code:text-neon-pink prose-code:bg-gray-900/50 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:text-sm;
+    @apply prose-pre:bg-gray-900/50 prose-pre:border prose-pre:border-gray-800/50 prose-pre:rounded-lg;
+    @apply prose-blockquote:border-l-2 prose-blockquote:border-neon-cyan/30 prose-blockquote:text-gray-400 prose-blockquote:italic prose-blockquote:pl-6;
+    @apply prose-hr:border-gray-800/50 prose-hr:my-12;
+    @apply prose-ul:text-gray-300 prose-ul:list-disc prose-ul:ml-6;
+    @apply prose-ol:text-gray-300 prose-ol:list-decimal prose-ol:ml-6;
+    @apply prose-li:text-gray-300 prose-li:leading-relaxed prose-li:my-2;
+    @apply prose-img:rounded-lg prose-img:shadow-2xl;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

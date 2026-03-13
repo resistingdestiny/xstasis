@@ -1,0 +1,233 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { parseRunFile } from '../../lib/run-parser';
+import path from 'path';
+
+const clubs = await getCollection('clubs');
+
+const runFilePath = path.join(process.cwd(), 'src/content/run/the-run.mdx');
+const runEntries = parseRunFile(runFilePath);
+
+const clubsWithVisits = clubs.map((club) => {
+  const visits = runEntries.filter((entry) =>
+    entry.club.toLowerCase() === club.data.title.toLowerCase()
+  );
+  const lastVisit = visits.length > 0 ? visits[0].date : null;
+
+  return {
+    ...club,
+    visits: visits.length,
+    lastVisit,
+  };
+}).sort((a, b) => a.data.title.localeCompare(b.data.title));
+
+const allCountries = [...new Set(clubs.map(c => c.data.country))].sort();
+const allCities = [...new Set(clubs.map(c => c.data.city))].sort();
+const allTags = [...new Set(clubs.flatMap(c => c.data.tags))].sort();
+---
+
+<BaseLayout title="Clubs - xstasis" description="Explore the clubs of xstasis">
+  <div class="container mx-auto px-4 py-12">
+    <div class="max-w-7xl mx-auto">
+      <div class="mb-12">
+        <h1 class="text-5xl font-bold mb-4 neon-text">Clubs</h1>
+        <p class="text-xl text-gray-400">
+          A curated archive of spaces where the night comes alive.
+        </p>
+      </div>
+
+      <div class="mb-8 p-6 bg-gray-900/50 border border-gray-800 rounded-lg">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label for="country-filter" class="block text-sm text-gray-500 uppercase tracking-wider mb-2">
+              Country
+            </label>
+            <select
+              id="country-filter"
+              class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-gray-300 focus:outline-none focus:border-neon-cyan"
+            >
+              <option value="">All Countries</option>
+              {allCountries.map((country) => (
+                <option value={country}>{country}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label for="city-filter" class="block text-sm text-gray-500 uppercase tracking-wider mb-2">
+              City
+            </label>
+            <select
+              id="city-filter"
+              class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-gray-300 focus:outline-none focus:border-neon-cyan"
+            >
+              <option value="">All Cities</option>
+              {allCities.map((city) => (
+                <option value={city}>{city}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label for="visited-filter" class="block text-sm text-gray-500 uppercase tracking-wider mb-2">
+              Status
+            </label>
+            <select
+              id="visited-filter"
+              class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-gray-300 focus:outline-none focus:border-neon-cyan"
+            >
+              <option value="">All</option>
+              <option value="visited">Visited</option>
+              <option value="not-visited">Not Visited</option>
+            </select>
+          </div>
+        </div>
+
+        {allTags.length > 0 && (
+          <div class="mt-4">
+            <div class="text-sm text-gray-500 uppercase tracking-wider mb-2">Tags</div>
+            <div class="flex flex-wrap gap-2" id="tag-filters">
+              {allTags.map((tag) => (
+                <button
+                  class="tag-filter px-3 py-1 bg-gray-800 text-gray-400 rounded text-sm hover:bg-gray-700 transition-all"
+                  data-tag={tag}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div id="clubs-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {clubsWithVisits.map((club) => (
+          <a
+            href={`/clubs/${club.slug}`}
+            class="club-card p-6 bg-gray-900/50 border border-gray-800 rounded-lg hover:border-neon-cyan transition-all group"
+            data-country={club.data.country}
+            data-city={club.data.city}
+            data-visited={club.data.visited}
+            data-tags={JSON.stringify(club.data.tags)}
+          >
+            <div class="flex items-start justify-between mb-3">
+              <h3 class="text-xl font-bold group-hover:text-neon-cyan transition-colors">
+                {club.data.title}
+              </h3>
+              {club.data.visited && (
+                <span class="px-2 py-1 bg-neon-cyan/20 text-neon-cyan text-xs rounded uppercase tracking-wider">
+                  Visited
+                </span>
+              )}
+            </div>
+
+            <div class="text-sm text-gray-500 mb-4">
+              {club.data.city}, {club.data.country}
+            </div>
+
+            {club.data.djmagRank && (
+              <div class="text-xs text-neon-pink mb-3">
+                DJ Mag #{club.data.djmagRank} ({club.data.djmagYear})
+              </div>
+            )}
+
+            {club.visits > 0 && (
+              <div class="text-xs text-gray-600 mb-3">
+                Visited {club.visits} {club.visits === 1 ? 'time' : 'times'}
+                {club.lastVisit && ` • Last: ${club.lastVisit}`}
+              </div>
+            )}
+
+            {club.data.tags.length > 0 && (
+              <div class="flex flex-wrap gap-1">
+                {club.data.tags.slice(0, 3).map((tag) => (
+                  <span class="text-xs px-2 py-1 bg-gray-800 text-gray-500 rounded">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </a>
+        ))}
+      </div>
+
+      {clubs.length === 0 && (
+        <div class="text-center py-20 text-gray-500">
+          <p>No clubs yet. The archive is growing...</p>
+        </div>
+      )}
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  const clubCards = document.querySelectorAll('.club-card') as NodeListOf<HTMLElement>;
+  const countryFilter = document.getElementById('country-filter') as HTMLSelectElement;
+  const cityFilter = document.getElementById('city-filter') as HTMLSelectElement;
+  const visitedFilter = document.getElementById('visited-filter') as HTMLSelectElement;
+  const tagButtons = document.querySelectorAll('.tag-filter') as NodeListOf<HTMLButtonElement>;
+
+  let selectedTags = new Set<string>();
+
+  function filterClubs() {
+    const country = countryFilter.value;
+    const city = cityFilter.value;
+    const visited = visitedFilter.value;
+
+    clubCards.forEach((card) => {
+      const cardCountry = card.dataset.country || '';
+      const cardCity = card.dataset.city || '';
+      const cardVisited = card.dataset.visited === 'true';
+      const cardTags = JSON.parse(card.dataset.tags || '[]');
+
+      const matchesCountry = !country || cardCountry === country;
+      const matchesCity = !city || cardCity === city;
+      const matchesVisited = !visited ||
+        (visited === 'visited' && cardVisited) ||
+        (visited === 'not-visited' && !cardVisited);
+      const matchesTags = selectedTags.size === 0 ||
+        Array.from(selectedTags).every(tag => cardTags.includes(tag));
+
+      if (matchesCountry && matchesCity && matchesVisited && matchesTags) {
+        card.style.display = 'block';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+
+  countryFilter.addEventListener('change', filterClubs);
+  cityFilter.addEventListener('change', filterClubs);
+  visitedFilter.addEventListener('change', filterClubs);
+
+  tagButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      const tag = button.dataset.tag;
+      if (!tag) return;
+
+      if (selectedTags.has(tag)) {
+        selectedTags.delete(tag);
+        button.classList.remove('bg-neon-cyan', 'text-gray-950');
+        button.classList.add('bg-gray-800', 'text-gray-400');
+      } else {
+        selectedTags.add(tag);
+        button.classList.remove('bg-gray-800', 'text-gray-400');
+        button.classList.add('bg-neon-cyan', 'text-gray-950');
+      }
+
+      filterClubs();
+    });
+  });
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const searchParam = urlParams.get('search');
+  if (searchParam) {
+    clubCards.forEach((card) => {
+      const title = card.querySelector('h3')?.textContent?.toLowerCase() || '';
+      if (!title.includes(searchParam.toLowerCase())) {
+        card.style.display = 'none';
+      }
+    });
+  }
+</script>

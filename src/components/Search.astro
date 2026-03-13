@@ -1,0 +1,113 @@
+---
+---
+
+<div id="search-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm">
+  <div class="container mx-auto px-4 py-20">
+    <div class="max-w-2xl mx-auto bg-gray-900 rounded-lg border border-gray-800 overflow-hidden">
+      <div class="p-4 border-b border-gray-800">
+        <input
+          type="text"
+          id="search-input"
+          placeholder="Search clubs, articles, and run entries... (Press / to focus)"
+          class="w-full bg-transparent text-lg outline-none text-gray-100 placeholder-gray-500"
+          autocomplete="off"
+        />
+      </div>
+      <div id="search-results" class="max-h-96 overflow-y-auto p-4">
+        <p class="text-gray-500 text-sm text-center py-8">Start typing to search...</p>
+      </div>
+    </div>
+    <div class="text-center mt-4">
+      <button id="search-close" class="text-gray-400 hover:text-gray-300 text-sm">
+        Press ESC to close
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  import Fuse from 'fuse.js';
+
+  const searchModal = document.getElementById('search-modal');
+  const searchInput = document.getElementById('search-input') as HTMLInputElement;
+  const searchResults = document.getElementById('search-results');
+  const searchTrigger = document.getElementById('search-trigger');
+  const searchClose = document.getElementById('search-close');
+
+  let fuse: Fuse<any> | null = null;
+
+  async function loadSearchIndex() {
+    if (fuse) return;
+
+    try {
+      const response = await fetch('/search-index.json');
+      const data = await response.json();
+
+      fuse = new Fuse(data, {
+        keys: ['title', 'content', 'tags'],
+        threshold: 0.3,
+        includeScore: true,
+      });
+    } catch (error) {
+      console.error('Failed to load search index:', error);
+    }
+  }
+
+  function openSearch() {
+    searchModal?.classList.remove('hidden');
+    searchInput?.focus();
+    loadSearchIndex();
+  }
+
+  function closeSearch() {
+    searchModal?.classList.add('hidden');
+    if (searchInput) searchInput.value = '';
+    if (searchResults) searchResults.innerHTML = '<p class="text-gray-500 text-sm text-center py-8">Start typing to search...</p>';
+  }
+
+  searchTrigger?.addEventListener('click', openSearch);
+  searchClose?.addEventListener('click', closeSearch);
+
+  searchModal?.addEventListener('click', (e) => {
+    if (e.target === searchModal) closeSearch();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === '/' && document.activeElement !== searchInput) {
+      e.preventDefault();
+      openSearch();
+    }
+    if (e.key === 'Escape') {
+      closeSearch();
+    }
+  });
+
+  searchInput?.addEventListener('input', (e) => {
+    const query = (e.target as HTMLInputElement).value;
+
+    if (!query || !fuse || !searchResults) {
+      searchResults.innerHTML = '<p class="text-gray-500 text-sm text-center py-8">Start typing to search...</p>';
+      return;
+    }
+
+    const results = fuse.search(query).slice(0, 10);
+
+    if (results.length === 0) {
+      searchResults.innerHTML = '<p class="text-gray-500 text-sm text-center py-8">No results found</p>';
+      return;
+    }
+
+    searchResults.innerHTML = results
+      .map(({ item }) => `
+        <a href="${item.url}" class="block p-3 rounded hover:bg-gray-800 transition-colors group">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-xs uppercase tracking-wider text-neon-cyan">${item.type}</span>
+            <span class="text-gray-600">•</span>
+            <h3 class="text-gray-100 group-hover:text-neon-cyan transition-colors">${item.title}</h3>
+          </div>
+          ${item.excerpt ? `<p class="text-sm text-gray-400 line-clamp-2">${item.excerpt}</p>` : ''}
+        </a>
+      `)
+      .join('');
+  });
+</script>

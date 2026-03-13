@@ -1,0 +1,98 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { parseRunFile } from '../lib/run-parser';
+import { resolveWikiLinks, replaceWikiLinks } from '../lib/wikilinks';
+import path from 'path';
+
+const runFilePath = path.join(process.cwd(), 'src/content/run/the-run.mdx');
+const rawEntries = parseRunFile(runFilePath);
+
+// Resolve wiki links in each entry's content
+const runEntries = await Promise.all(
+  rawEntries.map(async (entry) => {
+    const resolvedLinks = await resolveWikiLinks(entry.content);
+    return { ...entry, content: replaceWikiLinks(entry.content, resolvedLinks) };
+  })
+);
+
+const years = [...new Set(runEntries.map(e => e.date.split('-')[0]))].sort().reverse();
+---
+
+<BaseLayout title="The Run - xstasis" description="A continuously updated log of club visits">
+  <div class="container mx-auto px-4 py-12">
+    <div class="max-w-4xl mx-auto">
+      <div class="mb-12">
+        <h1 class="text-5xl font-bold mb-4 neon-text">The Run</h1>
+        <p class="text-xl text-gray-400">
+          A living, breathing log of dancefloors. Each entry a moment in time.
+        </p>
+      </div>
+
+      {years.length > 1 && (
+        <div class="mb-8 p-4 bg-gray-900/50 border border-gray-800 rounded-lg">
+          <div class="text-sm text-gray-500 uppercase tracking-wider mb-3">Jump to year</div>
+          <div class="flex flex-wrap gap-2">
+            {years.map((year) => (
+              <a
+                href={`#year-${year}`}
+                class="px-3 py-1 bg-gray-800 text-gray-300 rounded hover:bg-neon-cyan hover:text-gray-950 transition-all text-sm font-mono"
+              >
+                {year}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div class="space-y-8">
+        {runEntries.map((entry, index) => {
+          const prevEntry = index > 0 ? runEntries[index - 1] : null;
+          const currentYear = entry.date.split('-')[0];
+          const showYearDivider = !prevEntry || prevEntry.date.split('-')[0] !== currentYear;
+
+          return (
+            <>
+              {showYearDivider && (
+                <div id={`year-${currentYear}`} class="py-8 scroll-mt-20">
+                  <h2 class="text-4xl font-bold text-neon-cyan">{currentYear}</h2>
+                </div>
+              )}
+
+              <article id={entry.id} class="scroll-mt-20 p-6 bg-gray-900/30 border border-gray-800 rounded-lg hover:border-gray-700 transition-all group">
+                <div class="flex items-start gap-4 mb-4">
+                  <time class="text-sm font-mono text-gray-500 mt-1 whitespace-nowrap">
+                    {entry.date}
+                  </time>
+                  <div class="flex-1">
+                    <h3 class="text-2xl font-bold mb-2 group-hover:text-neon-cyan transition-colors">
+                      {entry.club}
+                    </h3>
+                    <div class="text-gray-500 text-sm">
+                      {entry.city}, {entry.country}
+                    </div>
+                  </div>
+                  <a
+                    href={`#${entry.id}`}
+                    class="text-gray-600 hover:text-neon-cyan transition-colors opacity-0 group-hover:opacity-100"
+                    aria-label="Link to this entry"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                  </a>
+                </div>
+                <div class="prose-dark text-gray-300" set:html={entry.content} />
+              </article>
+            </>
+          );
+        })}
+      </div>
+
+      {runEntries.length === 0 && (
+        <div class="text-center py-20 text-gray-500">
+          <p>No entries yet. The journey begins soon...</p>
+        </div>
+      )}
+    </div>
+  </div>
+</BaseLayout>

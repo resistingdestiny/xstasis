@@ -1,0 +1,306 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { parseRunFile, getRunStats } from '../lib/run-parser';
+import { parseClubsCSV, getClubStats } from '../lib/csv-parser';
+import path from 'path';
+
+const runFilePath = path.join(process.cwd(), 'src/content/run/the-run.mdx');
+const runEntries = parseRunFile(runFilePath);
+const stats = getRunStats(runEntries);
+
+const csvFilePath = path.join(process.cwd(), 'src/data/top100csv.csv');
+const clubsData = parseClubsCSV(csvFilePath);
+const clubStats = getClubStats(clubsData);
+
+const clubs = await getCollection('clubs');
+const articles = await getCollection('articles');
+
+const missionArticle = articles.find(a => a.slug === 'the-mission');
+const latestRunEntries = runEntries.slice(0, 3);
+const latestArticles = articles
+  .filter(a => a.slug !== 'the-mission')
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+  .slice(0, 2);
+---
+
+<BaseLayout>
+  <div class="grain-overlay"></div>
+
+  <div class="relative">
+    <section class="min-h-[80vh] flex items-center justify-center relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-radial from-neon-cyan/5 via-transparent to-transparent opacity-50"></div>
+      <div class="container mx-auto px-4 text-center relative z-10">
+        <h1 class="text-7xl md:text-9xl font-light mb-8 tracking-tighter leading-none">
+          <span class="inline-block animate-glow">xstasis</span>
+        </h1>
+        <p class="text-2xl md:text-3xl text-gray-300 mb-8 font-light max-w-3xl mx-auto leading-relaxed">
+          I am on a mission to go to the top 100 clubs in the world
+        </p>
+
+        <a
+          href="#mission"
+          class="inline-block text-gray-500 hover:text-neon-cyan transition-colors text-sm mb-16 group"
+        >
+          <span>Learn more</span>
+          <span class="inline-block ml-1 transform group-hover:translate-y-1 transition-transform">↓</span>
+        </a>
+
+        <div class="flex flex-wrap justify-center gap-3 mb-8 text-sm font-mono">
+          <span class="text-neon-cyan font-semibold">{clubStats.beenTo}/{clubStats.goal}</span>
+          <span class="text-gray-600">clubs visited</span>
+          <span class="text-gray-700">·</span>
+          <span class="text-gray-600">from {clubStats.totalClubs} tracked</span>
+        </div>
+        <div class="flex flex-wrap justify-center gap-3 mb-20 text-sm font-mono">
+          <span class="text-gray-600">{stats.cities} cities</span>
+          <span class="text-gray-700">×</span>
+          <span class="text-gray-600">{stats.countries} countries</span>
+          <span class="text-gray-700">×</span>
+          <span class="text-gray-600">{stats.totalEntries} moments</span>
+        </div>
+      </div>
+    </section>
+
+    {missionArticle && (
+      <section id="mission" class="container mx-auto px-4 py-20 scroll-mt-20">
+        <div class="max-w-4xl mx-auto">
+          <div class="relative">
+            <div class="absolute -left-4 top-0 w-1 h-full bg-gradient-to-b from-neon-cyan via-neon-pink to-transparent opacity-30"></div>
+            <div class="pl-8">
+              <div class="text-xs uppercase tracking-widest text-gray-600 mb-4">Featured</div>
+              <h2 class="text-5xl md:text-6xl font-light mb-8 leading-tight">
+                The Mission
+              </h2>
+
+              <div class="mb-8 p-6 bg-gray-900/30 border border-gray-800/50 rounded-lg">
+                <div class="text-xs uppercase tracking-widest text-gray-600 mb-4">Contents</div>
+                <nav class="space-y-2 text-sm">
+                  <a href="/articles/the-mission#the-beginning" class="block text-gray-400 hover:text-neon-cyan transition-colors">
+                    The Beginning
+                  </a>
+                  <a href="/articles/the-mission#the-challenge" class="block text-gray-400 hover:text-neon-cyan transition-colors">
+                    The Challenge
+                  </a>
+                  <a href="/articles/the-mission#the-reality" class="block text-gray-400 hover:text-neon-cyan transition-colors">
+                    The Reality
+                  </a>
+                  <a href="/articles/the-mission#the-scorecard" class="block text-gray-400 hover:text-neon-cyan transition-colors">
+                    The Scorecard
+                  </a>
+                  <a href="/articles/the-mission#the-journey-continues" class="block text-gray-400 hover:text-neon-cyan transition-colors">
+                    The Journey Continues
+                  </a>
+                </nav>
+              </div>
+
+              <div class="prose-arty text-lg md:text-xl leading-relaxed space-y-6 mb-10">
+                <p class="text-gray-300 first-letter:text-7xl first-letter:font-light first-letter:text-neon-cyan first-letter:mr-3 first-letter:float-left first-letter:leading-none first-letter:mt-1">
+                  I grew up in the countryside where my nearest shop was a 45 minute walk away.
+                  It was only in the first year of university I developed an interest in nightlife,
+                  where suddenly it was possible to go somewhere at midnight and find other people there.
+                </p>
+                <p class="text-gray-400">
+                  My interest only continued to grow while living in Beijing, where the sleepy student
+                  nightclubs of Oxford gave way to spectacles of lights, sounds, smoke and lasers...
+                </p>
+              </div>
+              <a
+                href="/articles/the-mission"
+                class="inline-block group"
+              >
+                <span class="text-lg text-gray-300 group-hover:text-neon-cyan transition-colors">
+                  Read the full story
+                </span>
+                <span class="inline-block ml-2 transform group-hover:translate-x-2 transition-transform text-neon-cyan">→</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+    )}
+
+    <section class="container mx-auto px-4 py-20 bg-gradient-to-b from-transparent via-gray-900/20 to-transparent">
+      <div class="max-w-6xl mx-auto">
+        <div class="text-center mb-12">
+          <h2 class="text-4xl md:text-5xl font-light mb-6">The Journey</h2>
+          <div class="w-full max-w-4xl mx-auto">
+            <div class="relative h-3 bg-gray-800/50 rounded-full overflow-hidden">
+              <div
+                class="absolute top-0 left-0 h-full bg-gradient-to-r from-neon-cyan to-neon-pink rounded-full transition-all duration-1000"
+                style={`width: ${(clubStats.beenTo / clubStats.goal) * 100}%`}
+              ></div>
+            </div>
+            <div class="flex justify-between mt-4 text-sm text-gray-500">
+              <span>{clubStats.beenTo} visited</span>
+              <span>{clubStats.goal - clubStats.beenTo} to go</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8 mt-16">
+          <div class="p-8 bg-gray-900/30 border border-neon-cyan/20 rounded-lg">
+            <h3 class="text-2xl font-light mb-6 text-neon-cyan">Been To ({clubStats.beenTo})</h3>
+            <div class="space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
+              {clubStats.beenToClubs
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((club) => (
+                <div class="text-sm text-gray-400 hover:text-gray-300 transition-colors">
+                  <span class="font-medium">{club.name}</span>
+                  <span class="text-gray-600 ml-2">— {club.city}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div class="p-8 bg-gray-900/30 border border-gray-800/50 rounded-lg">
+            <h3 class="text-2xl font-light mb-6 text-gray-400">Still To Go ({clubStats.goal - clubStats.beenTo})</h3>
+            <div class="space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
+              {clubStats.stillToGoClubs
+                .sort((a, b) => {
+                  const rankA = parseInt(a.rank2025) || 999;
+                  const rankB = parseInt(b.rank2025) || 999;
+                  return rankA - rankB;
+                })
+                .slice(0, clubStats.goal - clubStats.beenTo)
+                .map((club) => (
+                <div class="text-sm text-gray-500 hover:text-gray-400 transition-colors">
+                  <span class="text-gray-600 mr-2">#{club.rank2025}</span>
+                  <span>{club.name}</span>
+                  <span class="text-gray-600 ml-2">— {club.city}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="container mx-auto px-4 py-20">
+      <div class="max-w-6xl mx-auto">
+        <div class="flex items-baseline justify-between mb-16">
+          <h2 class="text-4xl md:text-5xl font-light">Recent Nights</h2>
+          <a href="/run" class="text-sm text-gray-500 hover:text-neon-cyan transition-colors group">
+            <span>all entries</span>
+            <span class="inline-block ml-1 transform group-hover:translate-x-1 transition-transform">→</span>
+          </a>
+        </div>
+
+        <div class="space-y-12">
+          {latestRunEntries.map((entry, index) => (
+            <a
+              href={`/run#${entry.id}`}
+              class="block group"
+            >
+              <article class="grid md:grid-cols-12 gap-6 items-start">
+                <time class="md:col-span-2 text-sm font-mono text-gray-600 group-hover:text-neon-cyan transition-colors">
+                  {entry.date}
+                </time>
+                <div class="md:col-span-10">
+                  <h3 class="text-3xl md:text-4xl font-light mb-3 group-hover:text-neon-cyan transition-colors">
+                    {entry.club}
+                  </h3>
+                  <div class="text-sm text-gray-600 mb-4 tracking-wide">
+                    {entry.city}, {entry.country}
+                  </div>
+                  <p class="text-gray-400 text-lg leading-relaxed line-clamp-2">
+                    {entry.note}
+                  </p>
+                </div>
+              </article>
+              {index < latestRunEntries.length - 1 && (
+                <div class="h-px bg-gradient-to-r from-transparent via-gray-800 to-transparent mt-12"></div>
+              )}
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    {latestArticles.length > 0 && (
+      <section class="container mx-auto px-4 py-20">
+        <div class="max-w-6xl mx-auto">
+          <div class="flex items-baseline justify-between mb-16">
+            <h2 class="text-4xl md:text-5xl font-light">Reflections</h2>
+            <a href="/articles" class="text-sm text-gray-500 hover:text-neon-cyan transition-colors group">
+              <span>all articles</span>
+              <span class="inline-block ml-1 transform group-hover:translate-x-1 transition-transform">→</span>
+            </a>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-16">
+            {latestArticles.map((article) => (
+              <a
+                href={`/articles/${article.slug}`}
+                class="group block"
+              >
+                <article>
+                  <time class="text-xs uppercase tracking-widest text-gray-600 mb-4 block">
+                    {article.data.date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}
+                  </time>
+                  <h3 class="text-3xl md:text-4xl font-light mb-6 leading-tight group-hover:text-neon-pink transition-colors">
+                    {article.data.title}
+                  </h3>
+                  <p class="text-gray-400 text-lg leading-relaxed mb-6">
+                    {article.data.summary}
+                  </p>
+                  {article.data.tags.length > 0 && (
+                    <div class="flex flex-wrap gap-3 text-xs">
+                      {article.data.tags.map((tag) => (
+                        <span class="text-gray-600 italic">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </article>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+
+    <section class="container mx-auto px-4 py-20">
+      <div class="max-w-4xl mx-auto text-center">
+        <div class="space-y-8">
+          <a
+            href="/run"
+            class="block py-8 group"
+          >
+            <span class="text-2xl font-light text-gray-400 group-hover:text-neon-cyan transition-colors">
+              Explore the Run
+            </span>
+          </a>
+          <a
+            href="/clubs"
+            class="block py-8 group"
+          >
+            <span class="text-2xl font-light text-gray-400 group-hover:text-neon-cyan transition-colors">
+              Browse the Clubs
+            </span>
+          </a>
+        </div>
+      </div>
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  @keyframes glow {
+    0%, 100% {
+      text-shadow: 0 0 20px rgba(0, 255, 255, 0.2), 0 0 40px rgba(0, 255, 255, 0.1);
+    }
+    50% {
+      text-shadow: 0 0 30px rgba(0, 255, 255, 0.4), 0 0 60px rgba(0, 255, 255, 0.2);
+    }
+  }
+
+  .animate-glow {
+    animation: glow 4s ease-in-out infinite;
+  }
+
+  .bg-gradient-radial {
+    background: radial-gradient(circle, var(--tw-gradient-stops));
+  }
+</style>

@@ -1,0 +1,38 @@
+---
+interface Image {
+  src: string;
+  alt: string;
+  caption?: string;
+}
+
+interface Props {
+  images: Image[];
+}
+
+const { images = [] } = Astro.props;
+---
+
+{images.length > 0 ? (
+  <div class="gallery grid grid-cols-1 md:grid-cols-2 gap-4 my-8">
+    {images.map((image) => (
+      <figure class="gallery-item group">
+        <div class="overflow-hidden rounded-lg bg-gray-900">
+          <img
+            src={image.src}
+            alt={image.alt}
+            class="w-full h-auto transition-transform duration-300 group-hover:scale-105"
+          />
+        </div>
+        {image.caption && (
+          <figcaption class="mt-2 text-sm text-gray-400 italic">
+            {image.caption}
+          </figcaption>
+        )}
+      </figure>
+    ))}
+  </div>
+) : (
+  <div class="bg-yellow-900/20 border border-yellow-500 p-4 rounded my-4">
+    <p class="text-yellow-400">No images provided for gallery</p>
+  </div>
+)}

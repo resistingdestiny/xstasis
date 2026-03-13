@@ -1,0 +1,23 @@
+---
+interface Props {
+  id: string;
+}
+
+const { id } = Astro.props;
+---
+
+{id ? (
+  <div class="vimeo-embed relative w-full pb-[56.25%] my-8 rounded-lg overflow-hidden bg-black">
+    <iframe
+      class="absolute top-0 left-0 w-full h-full"
+      src={`https://player.vimeo.com/video/${id}?h=0&title=0&byline=0&portrait=0`}
+      frameborder="0"
+      allow="autoplay; fullscreen; picture-in-picture"
+      allowfullscreen
+    ></iframe>
+  </div>
+) : (
+  <div class="bg-red-900/20 border border-red-500 p-4 rounded my-4">
+    <p class="text-red-400">Missing Vimeo video ID</p>
+  </div>
+)}
